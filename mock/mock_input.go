@@ -6,7 +6,7 @@ import (
 	types "github.com/raanfefu/go-flow-cash/types"
 )
 
-func mock() *types.Event {
+func MockInputEvent() *types.Event {
 	event := &types.Event{
 		Name:             "Data",
 		Start:            time.Date(2022, 9, 1, 0, 0, 0, 0, &time.Location{}),

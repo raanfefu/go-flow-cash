@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	mock "github.com/raanfefu/go-flow-cash/mock"
 	types "github.com/raanfefu/go-flow-cash/types"
 	validations "github.com/raanfefu/go-flow-cash/validations"
 
@@ -38,7 +39,7 @@ func main() {
 	validate.RegisterStructValidation(validations.DateContractValidation, &types.Event{})
 	validate.RegisterStructValidation(validations.PeriodAndRateContractValidation, &types.Event{})
 
-	event := mock()
+	event := mock.MockInputEvent()
 
 	err := validate.Struct(event)
 	if err != nil {
