@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	types "github.com/raanfefu/go-flow-cash/types"
 	validations "github.com/raanfefu/go-flow-cash/validations"
@@ -34,10 +33,13 @@ func Handler(event *types.Event) (*types.FlowResult, error) {
 }
 
 func main() {
+
 	validate := validator.New()
 	validate.RegisterStructValidation(validations.DateContractValidation, &types.Event{})
 	validate.RegisterStructValidation(validations.PeriodAndRateContractValidation, &types.Event{})
+
 	event := mock()
+
 	err := validate.Struct(event)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
@@ -46,18 +48,4 @@ func main() {
 		return
 	}
 	Handler(event)
-}
-
-func mock() *types.Event {
-	event := &types.Event{
-		Name:             "Data",
-		Start:            time.Date(2022, 9, 1, 0, 0, 0, 0, &time.Location{}),
-		End:              time.Date(2023, 9, 1, 0, 0, 0, 0, &time.Location{}),
-		FistPayment:      time.Date(2022, 9, 1, 0, 0, 0, 0, &time.Location{}),
-		PaymentPeriod:    1,
-		Amount:           100000,
-		IndexationRate:   1,
-		IndexationPeriod: 1,
-	}
-	return event
 }
