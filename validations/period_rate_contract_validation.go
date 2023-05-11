@@ -7,7 +7,7 @@ import (
 
 func PeriodAndRateContractValidation(sl validator.StructLevel) {
 	event := sl.Current().Interface().(types.Event)
-	if event.IndexationRate > event.PaymentPeriod {
+	if event.IndexationRate < event.PaymentPeriod {
 		sl.ReportError(event.Start, "PaymentPeriod", "PaymentPeriod", "\"PaymentPeriod gt  IndexationPeriod\"", "None")
 	}
 }
