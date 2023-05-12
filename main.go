@@ -7,30 +7,49 @@ import (
 	types "github.com/raanfefu/go-flow-cash/types"
 	validations "github.com/raanfefu/go-flow-cash/validations"
 
-	strftime "github.com/itchyny/timefmt-go"
 	"gopkg.in/go-playground/validator.v9"
 )
 
 func Handler(event *types.Event) (*types.FlowResult, error) {
 
 	difference := event.End.Sub(event.Start)
-	months := int64(difference.Hours()/24/30) / 1
-	frecuency := int64(months / event.PaymentPeriod)
-	numPeriods := int64(months / event.IndexationPeriod)
+	months := int32(difference.Hours()/24/30) / 1
+	frecuency := months / event.PaymentPeriod
 
-	fmt.Printf("num months %d\n", months)
-	fmt.Printf("num payments %d\n", frecuency)
-	fmt.Printf("num  indexation period %d\n", numPeriods)
+	nextDateIndexation := event.Start.AddDate(0, int(event.IndexationPeriod), 0)
 
 	newDate := event.Start.AddDate(0, 0, 0)
+	amount := event.Amount
+	movements := make([]*types.Movements, frecuency)
+	indexationFactor, _ := retriveIndexationRateValue(event.IndexationRates)
 
-	for f := 1; f <= int(frecuency); f++ {
-		fmt.Printf("payment #%d - %s \n", f, strftime.Format(newDate, "%Y-%m-%d"))
+	for f := 0; f < int(frecuency); f++ {
+		pastMonth := f * int(event.PaymentPeriod)
+
+		if newDate.After(nextDateIndexation) {
+			nextDateIndexation = nextDateIndexation.AddDate(0, int(event.IndexationPeriod), 0)
+			amount = float32(amount) * indexationFactor
+		}
+		movements[f] = &types.Movements{
+			Amount:         amount,
+			Date:           newDate,
+			IndexationRate: indexationFactor,
+			PassMonth:      int32(pastMonth),
+		}
+
 		newDate = newDate.AddDate(0, int(event.PaymentPeriod), 0)
 	}
+	for i := 0; i < int(frecuency); i++ {
+		fmt.Printf("%s | %f | %f\n", movements[i].Date, movements[i].Amount, movements[i].IndexationRate)
+	}
 
-	result := &types.FlowResult{Name: event.Name}
+	result := &types.FlowResult{}
 	return result, nil
+}
+
+func retriveIndexationRateValue(rates types.IndexationRates) (float32, error) {
+	rate := rates.IndexationRateValue
+	return (1 + float32(rate)/float32(100)), nil
 }
 
 func main() {
