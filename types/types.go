@@ -12,8 +12,9 @@ type Event struct {
 	End                time.Time       `validate:"required"`
 	FistPayment        time.Time       `validate:"required"`
 	PaymentPeriod      int32           `validate:"min=1"`
-	Amount             float32         `validate:"required,min=1"`
-	capital            string          `validete:"required"`
+	PaymentAmount      float32         `validate:"required,min=1"`
+	//ContratAmount      float32         `validate:"required,min=1"`
+	Capital []Movements
 }
 
 type IndexationRates struct {
@@ -35,4 +36,5 @@ type Movements struct {
 	Amount         float32
 	IndexationRate float32
 	PassMonth      int32
+	mType          string
 }

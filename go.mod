@@ -3,8 +3,7 @@ module github.com/raanfefu/go-flow-cash
 go 1.17
 
 require (
-	github.com/go-playground/validator v9.31.0+incompatible
-	github.com/itchyny/timefmt-go v0.1.5
+	github.com/maksim77/goxirr v0.0.2
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )
 
