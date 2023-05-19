@@ -11,10 +11,10 @@ type Event struct {
 	Start              time.Time       `validate:"required"`
 	End                time.Time       `validate:"required"`
 	FistPayment        time.Time       `validate:"required"`
+	DateOfPurchase     time.Time       `validate:"required"`
 	PaymentPeriod      int32           `validate:"min=1"`
-	PaymentAmount      float32         `validate:"required,min=1"`
-	//ContratAmount      float32         `validate:"required,min=1"`
-	Capital []Movements
+	PaymentAmount      float64         `validate:"required,min=1"`
+	Capital            []Movements
 }
 
 type IndexationRates struct {
@@ -28,13 +28,16 @@ type IndexationRate struct {
 }
 
 type FlowResult struct {
-	Name string `json:@"name"`
+	MovementsResult []Movements
+	TIR             float64
 }
 
 type Movements struct {
 	Date           time.Time
-	Amount         float32
-	IndexationRate float32
+	Amount         float64
+	CashFlow       float64
+	IndexationRate float64
 	PassMonth      int32
-	mType          string
+	MType          string
+	CurrentValue   float64
 }
