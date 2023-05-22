@@ -1,24 +1,26 @@
 package finances
 
 import (
-	"fmt"
 	"math"
 
 	types "github.com/raanfefu/go-flow-cash/types"
 )
 
-func XIRR(transactions []types.Movements) float64 {
-	tir := iteration(transactions, 0, 0, 1)
-	fmt.Print(tir)
+const MAX_LEVEL = 1
+const INIT_LEVEL = 0
+const INIT_GUESS = 0
+
+func XIRR(transactions *[]types.Movements) float64 {
+	tir := iteration(transactions, INIT_GUESS, INIT_LEVEL, MAX_LEVEL)
 	return tir
 }
 
-func iteration(transactions []types.Movements, ini float64, level int, maxLevel int) float64 {
+func iteration(transactions *[]types.Movements, ini float64, level int, maxLevel int) float64 {
 	level += 1
 	tir := float64(0)
 	for iw := 0; iw < 99; iw++ {
 		guess := (ini + (float64(iw))/math.Pow(float64(100), float64(level)))
-		sigma := sigmaResolve(transactions, guess)
+		sigma := sigmaResolve(*transactions, guess)
 		if sigma < 0 {
 			//fmt.Printf("level: %d, it: %d\n", level, iw-1)
 			if level < 100 {

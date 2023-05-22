@@ -5,8 +5,9 @@ import (
 )
 
 type Event struct {
-	IndexationRates    IndexationRates `validate:"required"`
-	LeaseAgreementType string          `validate:"required"`
+	Capital            []Movements
+	IndexationRates    IndexationRates `validate:"required"` // Indexation Rate Parameters
+	LeaseAgreementType string          `validate:"required"` // Lease Agreement Type ( FF / FV / )
 	IndexationPeriod   int32           `validate:"min=1"`
 	Start              time.Time       `validate:"required"`
 	End                time.Time       `validate:"required"`
@@ -14,7 +15,6 @@ type Event struct {
 	DateOfPurchase     time.Time       `validate:"required"`
 	PaymentPeriod      int32           `validate:"min=1"`
 	PaymentAmount      float64         `validate:"required,min=1"`
-	Capital            []Movements
 }
 
 type IndexationRates struct {
@@ -28,16 +28,21 @@ type IndexationRate struct {
 }
 
 type FlowResult struct {
-	MovementsResult []Movements
-	TIR             float64
+	MovementsResult   []Movements
+	TIR               float64
+	SigmaCapital      float64
+	SigmaCurrentValue float64
+	SigmaDuration     float64
+	Duration          float64
 }
 
 type Movements struct {
 	Date           time.Time
 	Amount         float64
+	Capital        float64
 	CashFlow       float64
 	IndexationRate float64
-	PassMonth      int32
-	MType          string
 	CurrentValue   float64
+	Duration       float64
+	PassMonth      int32
 }

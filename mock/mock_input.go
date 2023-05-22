@@ -14,21 +14,21 @@ func MockInputEvent() *types.Event {
 		Amount:         float64(-500000),
 		IndexationRate: float64(0),
 		PassMonth:      int32(0),
-		MType:          "C",
+		//MType:          "C",
 	}
 	mov[1] = types.Movements{
 		Date:           time.Date(2022, 7, 2, 0, 0, 0, 0, &time.Location{}),
 		Amount:         float64(-100000),
 		IndexationRate: float64(0),
 		PassMonth:      int32(0),
-		MType:          "C",
+		//MType:          "C",
 	}
 	mov[2] = types.Movements{
 		Date:           time.Date(2022, 7, 3, 0, 0, 0, 0, &time.Location{}),
 		Amount:         float64(-600000),
 		IndexationRate: float64(0),
 		PassMonth:      int32(0),
-		MType:          "C",
+		//MType:          "C",
 	}
 
 	event := &types.Event{

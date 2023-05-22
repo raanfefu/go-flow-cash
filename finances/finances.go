@@ -7,7 +7,13 @@ import (
 	types "github.com/raanfefu/go-flow-cash/types"
 )
 
+const TYPE_INDEXATION_FIXED_FIXED = "FF"
+const TYPE_INDEXATION_FIXED_VARIABLE = "FV"
+const TYPE_INDEXATION_VARIABLE = "V"
+
 func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
+
+	result := &types.FlowResult{}
 
 	indexationFactor := float64(0)
 	cMovSize := len(event.Capital)
@@ -28,7 +34,9 @@ func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
 		movements[f] = event.Capital[f]
 		movements[f].CashFlow = event.Capital[f].Amount
 		sumCapital += event.Capital[f].Amount
+
 	}
+	result.SigmaCapital = sumCapital
 
 	// Calc Futures
 	count := 0
@@ -41,17 +49,16 @@ func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
 		count++
 		if newDate.After(nextDateIndexation) {
 			nextDateIndexation = nextDateIndexation.AddDate(0, int(event.IndexationPeriod), 0)
-			factor, _ := retriveIndexationRateValue(event.IndexationRates)
-			amount = amount * factor
-			indexationFactor = factor
+			indexationFactor, _ := retriveIndexationRateValue(event.IndexationRates)
+			amount = amount * indexationFactor
 		}
 
 		movements = append(movements, types.Movements{
-			Amount:         amount,
 			Date:           newDate,
+			Amount:         amount,
+			Capital:        0,
 			IndexationRate: indexationFactor,
 			PassMonth:      int32(pastMonth),
-			MType:          "R",
 			CashFlow:       amount,
 		})
 
@@ -59,18 +66,16 @@ func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
 	}
 
 	movements[len(movements)-1].CashFlow = (-1 * sumCapital) + movements[len(movements)-1].Amount
-	movements[len(movements)-1].MType = "A"
 
-	result := &types.FlowResult{
-		MovementsResult: movements,
-	}
+	result.MovementsResult = movements
 
 	return *result, nil
 }
 
-func CalcCurrentValue(result *types.FlowResult, dateOfPurchase time.Time, tir float64) (*types.FlowResult, error) {
+func CalcCurrentValue(result *types.FlowResult, dateOfPurchase time.Time) (*types.FlowResult, error) {
 
 	movements := result.MovementsResult
+	tir := result.TIR
 
 	for i := 0; i < len(movements); i++ {
 
@@ -81,7 +86,38 @@ func CalcCurrentValue(result *types.FlowResult, dateOfPurchase time.Time, tir fl
 		pow := float64(dateOfPurchase-dateOfMovement) / float64(360) * -1
 		movements[i].CurrentValue = movements[i].CashFlow / math.Pow(base, float64(pow))
 
+		if movements[i].CurrentValue > 0 {
+			result.SigmaCurrentValue = result.SigmaCurrentValue + movements[i].CurrentValue
+		}
+
 	}
+
+	return result, nil
+}
+
+/*
+
+	Formula:
+	( [i].currentValue / SigmaCurrentVaue)*(([i].movDate  - startDate)/360)
+
+*/
+
+func Duration(result *types.FlowResult, startDate time.Time) (*types.FlowResult, error) {
+	movements := result.MovementsResult
+
+	for i := 0; i < len(movements)-1; i++ {
+		if movements[i].CurrentValue > 0 {
+			duration := (movements[i].CurrentValue / result.SigmaCurrentValue) * ((DateToFloat64(movements[i].Date) - DateToFloat64(startDate)) / float64(360))
+			movements[i].Duration = duration
+			result.SigmaDuration = result.SigmaDuration + duration
+		}
+	}
+	last := len(movements) - 1
+	duration := (movements[last].Amount / result.SigmaCurrentValue) * ((DateToFloat64(movements[last].Date) - DateToFloat64(startDate)) / float64(360))
+	movements[last].Duration = duration
+	result.SigmaDuration = result.SigmaDuration + duration
+
+	result.Duration = result.SigmaDuration / (1 + result.TIR)
 
 	return result, nil
 }

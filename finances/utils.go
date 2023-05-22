@@ -10,6 +10,10 @@ func DateToInt64(date time.Time) int64 {
 	num := float64(0)
 	return int64(num + date.Sub(MakeDate(1900, 1, 1)).Hours()/24)
 }
+func DateToFloat64(date time.Time) float64 {
+	num := float64(0)
+	return float64(num + date.Sub(MakeDate(1900, 1, 1)).Hours()/24)
+}
 
 func MakeDate(year int, month int, day int) time.Time {
 	return time.Date(1900, 1, 1, 0, 0, 0, 0, &time.Location{})
