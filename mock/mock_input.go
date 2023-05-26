@@ -3,6 +3,7 @@ package mock
 import (
 	"time"
 
+	finances "github.com/raanfefu/go-flow-cash/finances"
 	types "github.com/raanfefu/go-flow-cash/types"
 )
 
@@ -31,8 +32,22 @@ func MockInputEvent() *types.Event {
 		//MType:          "C",
 	}
 
+	indexationRates := make([]types.IndexationRate, 3)
+	indexationRates[0] = types.IndexationRate{
+		IndexationRateValue: 2,
+		Date:                finances.MakeDate(2025, 01, 1),
+	}
+	indexationRates[1] = types.IndexationRate{
+		IndexationRateValue: 1,
+		Date:                finances.MakeDate(2027, 01, 1),
+	}
+	indexationRates[2] = types.IndexationRate{
+		IndexationRateValue: 3,
+		Date:                finances.MakeDate(2023, 01, 1),
+	}
+
 	event := &types.Event{
-		LeaseAgreementType: "FF",
+		LeaseAgreementType: "FV",
 		DateOfPurchase:     time.Date(2022, 7, 1, 0, 0, 0, 0, &time.Location{}),
 		Start:              time.Date(2022, 9, 1, 0, 0, 0, 0, &time.Location{}),
 		End:                time.Date(2027, 10, 1, 0, 0, 0, 0, &time.Location{}),
@@ -41,6 +56,7 @@ func MockInputEvent() *types.Event {
 		PaymentAmount:      10000,
 		IndexationRates: types.IndexationRates{
 			IndexationRateValue: 4,
+			Rates:               indexationRates,
 		},
 		IndexationPeriod: 12,
 		Capital:          mov,

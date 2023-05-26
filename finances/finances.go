@@ -1,7 +1,9 @@
 package finances
 
 import (
+	"log"
 	"math"
+	"sort"
 	"time"
 
 	types "github.com/raanfefu/go-flow-cash/types"
@@ -11,6 +13,7 @@ const TYPE_INDEXATION_FIXED_FIXED = "FF"
 const TYPE_INDEXATION_FIXED_VARIABLE = "FV"
 const TYPE_INDEXATION_VARIABLE = "V"
 
+// This function calc cash flow only FF y FV
 func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
 
 	result := &types.FlowResult{}
@@ -31,6 +34,7 @@ func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
 
 	// Add Capital Movements
 	for f := 0; f < int(cMovSize); f++ {
+
 		movements[f] = event.Capital[f]
 		movements[f].CashFlow = event.Capital[f].Amount
 		sumCapital += event.Capital[f].Amount
@@ -40,6 +44,7 @@ func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
 
 	// Calc Futures
 	count := 0
+	sortIndexationRates(&event.IndexationRates)
 	for f := cMovSize; f < int(frecuency); f++ {
 
 		pastMonth := f * int(event.PaymentPeriod)
@@ -47,9 +52,11 @@ func MakeCashFlow(event *types.Event) (types.FlowResult, error) {
 			break
 		}
 		count++
+
 		if newDate.After(nextDateIndexation) {
 			nextDateIndexation = nextDateIndexation.AddDate(0, int(event.IndexationPeriod), 0)
-			indexationFactor, _ := retriveIndexationRateValue(event.IndexationRates)
+
+			indexationFactor, _ := retriveIndexationRateValue(event.IndexationRates, event.LeaseAgreementType, newDate)
 			amount = amount * indexationFactor
 		}
 
@@ -120,4 +127,50 @@ func Duration(result *types.FlowResult, startDate time.Time) (*types.FlowResult,
 	result.Duration = result.SigmaDuration / (1 + result.TIR)
 
 	return result, nil
+}
+
+func retriveIndexationRateValue(rates types.IndexationRates, indexationType string, dateMov time.Time) (float64, error) {
+	rate := float64(0)
+	//finalr := types.IndexationRate{}
+
+	switch indexationType {
+	case "FF":
+		rate = (1 + float64(rates.IndexationRateValue)/float64(100))
+	case "FV":
+		for i := 0; i < len(rates.Rates); i++ {
+			if dateMov.After(rates.Rates[i].Date) {
+				rate = float64(rates.Rates[i].IndexationRateValue)
+			} else {
+				continue
+			}
+		}
+	case "FM":
+		rateValue := (1 + float64(rates.IndexationRateValue)/float64(100))
+		rateParam := float64(0)
+		for i := 0; i < len(rates.Rates); i++ {
+			if dateMov.After(rates.Rates[i].Date) {
+				rateParam = float64(rates.Rates[i].IndexationRateValue)
+			} else {
+				continue
+			}
+		}
+		if rateValue < rateParam {
+			rate = rateParam
+		} else {
+			rate = rateValue
+		}
+
+	default:
+		log.Fatal("Not Found Factor Indexation")
+	}
+
+	return rate, nil
+}
+
+func sortIndexationRates(rates *types.IndexationRates) {
+	arr := rates.Rates
+	sort.SliceStable(arr, func(a, b int) bool {
+		return DateToInt64(arr[a].Date) < DateToInt64(arr[b].Date)
+	})
+
 }

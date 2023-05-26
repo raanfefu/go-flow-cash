@@ -1,49 +1,64 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"strings"
+	"time"
 
-	finances "github.com/raanfefu/go-flow-cash/finances"
-	mock "github.com/raanfefu/go-flow-cash/mock"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/go-playground/validator"
+	"github.com/raanfefu/go-flow-cash/finances"
 	types "github.com/raanfefu/go-flow-cash/types"
-	validations "github.com/raanfefu/go-flow-cash/validations"
-	"gopkg.in/go-playground/validator.v9"
 )
 
-func Handler(event *types.Event) (*types.FlowResult, error) {
+func (c *types.CustomDate) UnmarshalJSON(b []byte) error {
+	value := strings.Trim(string(b), `"`) //get rid of "
+	if value == "" || value == "null" {
+		return nil
+	}
+
+	t, err := time.Parse("2006-01-02", value) //parse time
+	if err != nil {
+		return err
+	}
+	*c = types.CustomDate(t) //set result using the pointer
+	return nil
+}
+
+func (c types.CustomDate) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + time.Time(c).Format("2006-01-02") + `"`), nil
+}
+
+func HandleRequest(ctx context.Context, event *types.Event) (*types.FlowResult, error) {
 
 	result, _ := finances.MakeCashFlow(event)
 	movements := result.MovementsResult
 	result.TIR = finances.XIRR(&movements)
 	finances.CalcCurrentValue(&result, event.DateOfPurchase)
 	finances.Duration(&result, event.Start)
-	for i := 0; i < len(movements); i++ {
-
-		fmt.Printf("DT: %s | MV: %.2f | CF: %.2f | CV:%.2f | DU: %.6f \n", movements[i].Date, movements[i].Amount, movements[i].CashFlow, movements[i].CurrentValue, movements[i].Duration)
-	}
 	return &result, nil
 }
 
-func main() {
+func ErrorsLambda(err error) error {
+	for _, err := range err.(validator.ValidationErrors) {
+		fmt.Println(err.Field(), err.Tag())
+	}
+	return err
+}
 
+func HandleRequestTest(ctx context.Context, event *types.Event) (*types.Event, error) {
 	validate := validator.New()
-	validate.RegisterStructValidation(validations.DateContractValidation, &types.Event{})
-	validate.RegisterStructValidation(validations.PeriodAndRateContractValidation, &types.Event{})
-
-	event := mock.MockInputEvent()
 
 	err := validate.Struct(event)
 	if err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			fmt.Println(err.Field(), err.Tag())
-		}
-		return
+		return nil, ErrorsLambda(err)
 	}
-	r, _ := Handler(event)
-	fmt.Printf("TIR: %f.2\n", r.TIR)
-	fmt.Printf("Sigma Capital: %.2f\n", r.SigmaCapital)
-	fmt.Printf("Sigma CurrentValue: %.2f\n", r.SigmaCurrentValue)
-	fmt.Printf("Sigma Duration: %.2f\n", r.SigmaDuration)
-	fmt.Printf("Duration: %.2f\n ", r.Duration)
+
+	return event, nil
+}
+func main() {
+
+	lambda.Start(HandleRequestTest)
 
 }

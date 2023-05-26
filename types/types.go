@@ -4,17 +4,19 @@ import (
 	"time"
 )
 
+type CustomDate time.Time
+
 type Event struct {
 	Capital            []Movements
-	IndexationRates    IndexationRates `validate:"required"` // Indexation Rate Parameters
-	LeaseAgreementType string          `validate:"required"` // Lease Agreement Type ( FF / FV / )
-	IndexationPeriod   int32           `validate:"min=1"`
-	Start              time.Time       `validate:"required"`
-	End                time.Time       `validate:"required"`
-	FistPayment        time.Time       `validate:"required"`
-	DateOfPurchase     time.Time       `validate:"required"`
-	PaymentPeriod      int32           `validate:"min=1"`
-	PaymentAmount      float64         `validate:"required,min=1"`
+	IndexationRates    IndexationRates `json:"indexationRate"`                           // Indexation Rate Parameters
+	LeaseAgreementType string          `validate:"required" 		json:"leaseAgreementType"` // Lease Agreement Type ( FF / FV / )
+	IndexationPeriod   int32           `validate:"min=1" 			json:"indexationPeriod"`
+	Start              CustomDate      `validate:"required" 		json:"start"`
+	End                CustomDate      `validate:"required" 		json:"end"`
+	FistPayment        CustomDate      `validate:"required" 		json:"fistPayment"`
+	DateOfPurchase     CustomDate      `validate:"required" 		json:"dateOfPurchase"`
+	PaymentPeriod      int32           `validate:"min=1"    		json:"paymentPeriod"`
+	PaymentAmount      float64         `validate:"required,min=1"   json:"paymentAmount"`
 }
 
 type IndexationRates struct {
